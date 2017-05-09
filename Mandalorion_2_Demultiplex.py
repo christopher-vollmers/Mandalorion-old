@@ -26,27 +26,22 @@ while iterator<length:
     sequence=infile.readline()
     plus=infile.readline()
     quality=infile.readline()
-    quals=[]
-    for character in line.strip():
-        number = ord(character)-33
-        quals.append(number) 
-    if np.average(quals)>=9:
-        name=line[1:].strip()
-        readlist.append(name)
-        adapter_dict[name]={}
+    name=line[1:].strip()
+    readlist.append(name)
+    adapter_dict[name]={}
 
-        adapter_dict[name]['+']=[]
-        adapter_dict[name]['-']=[]
+    adapter_dict[name]['+']=[]
+    adapter_dict[name]['-']=[]
 
-        adapter_dict[name]['+'].append('-')
-        adapter_dict[name]['-'].append('-')
+    adapter_dict[name]['+'].append('-')
+    adapter_dict[name]['-'].append('-')
 
-        adapter_dict[name]['+_pos']=[]
-        adapter_dict[name]['-_pos']=[]
+    adapter_dict[name]['+_pos']=[]
+    adapter_dict[name]['-_pos']=[]
 
-        adapter_dict[name]['+_pos'].append(0)
-        adapter_dict[name]['-_pos'].append(len(sequence))
-        iterator+=4   
+    adapter_dict[name]['+_pos'].append(0)
+    adapter_dict[name]['-_pos'].append(len(sequence))
+    iterator+=4   
 
 
 
@@ -155,8 +150,8 @@ while x<length:
         if len(b[position_plus:position_minus])>0:
             count_dict[outfile]+=1
             good+=1
-            outa.write('>'+a[1:-1]+'_'+add_left+'_'+add_right+'\n'+b[position_plus:position_minus]+'\n')
-            outq.write(a[:-1]+'_'+add_left+'_'+add_right+'\n'+b[position_plus:position_minus]+'\n'+c+'\n'+d[position_plus:position_minus]+'\n')
+            outa.write('>'+a[1:]+'_'+add_left+'_'+add_right+'\n'+b[position_plus:position_minus]+'\n')
+            outq.write(a+'_'+add_left+'_'+add_right+'\n'+b[position_plus:position_minus]+'\n'+c+'\n'+d[position_plus:position_minus]+'\n')
 
   except:
       pass
