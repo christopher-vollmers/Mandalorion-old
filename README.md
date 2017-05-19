@@ -2,17 +2,23 @@
 
 -Mandalorion_3_Remove_ISPCR_Sequences.py
     Removed bug that appended empty read at the end of output fastq/a files that would stall gmap.
+
 -Mandalorion_demultiplex_and_align.py
     Added '-t' flag option to run multiple gmap threads. Default is 1
+
 -Mandalorion_just_align.py
     Added '-t' flag option to run multiple gmap threads. Default is 1
+
 -Mandalorion_define_and_quantify_isoforms.py
     Added '-r' flag (options 'g' or 'gi', or 'i') to use use genome annation when defining TESS and SS.
     Added command to run Mandalorion_6.5_Refine_SS.py
+
 -Mandalorion_5_TESS.py
     Modified to accomodate '-r' flag. If '-r' flag contains 'g' it uses TESS defined in the genome annotation file in addition to ONT read data
+
 -Mandalorion_6_SS.py
     Modified to accomodate '-r' flag. If '-r' flag contains 'g' it uses SS defined in the genome annotation file in addition to ONT read data
+
 -Mandalorion_6.5_Refine_SS.py
     New script that is run if -r flag contains 'i'. 
     Looks for SS bins that contains more than 1 Illumina splice junction. 
