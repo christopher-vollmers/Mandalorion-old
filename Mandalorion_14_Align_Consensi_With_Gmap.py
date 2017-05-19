@@ -101,7 +101,7 @@ def filter_reads(path,infile,outfile):
 
 
 
-infile=path+'/Isoform_Consensi_gmapoutput.psl'
+infile=path+'/Isoform_Consensi_gmapoutput_.psl'
 outfile=path+'/Isoform_Consensi_gmapoutput_filtered.psl'
 os.system('gmap -B 5 -f psl -d %s %s > %s ' %(genome, path+'/Isoform_Consensi.fasta',infile))
 filter_reads(path,infile,outfile)

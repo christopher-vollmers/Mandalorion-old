@@ -1,6 +1,6 @@
 import numpy as np
-import sys
 import os
+import sys
 
 
 path=sys.argv[2]
@@ -12,6 +12,31 @@ downstream_buffer=int(sys.argv[3])
 def collect_alt_events(path):
     alt_dict={}
     chromosome_list=set()
+
+    for line in open(path+'/Sequential_SS.txt'):
+      a=line.strip().split('\t')
+      parts=a[0].split('-')
+
+      chromosome=parts[-1]
+      
+      gene_name=a[0]
+      try:
+          bla=alt_dict[gene_name]
+      except:
+          alt_dict[gene_name]={}
+          alt_dict[gene_name]['starts']=set() 
+          alt_dict[gene_name]['ends']=set() 
+          alt_dict[gene_name]['alt']={}
+          alt_dict[gene_name]['ret']={}
+          alt_dict[gene_name]['seq']=[]
+
+
+      seqs=a[1].split(',')[:-1]
+      alt_dict[gene_name]['seq'].append(seqs)
+
+
+
+
     for line in open(path+'/Retention.txt'):
       a=line.strip().split('\t')
       parts=a[0].split('-')
@@ -27,6 +52,7 @@ def collect_alt_events(path):
           alt_dict[gene_name]['ends']=set() 
           alt_dict[gene_name]['alt']={}
           alt_dict[gene_name]['ret']={}
+          alt_dict[gene_name]['seq']=[]
 
 
       retention5=a[1]
@@ -72,6 +98,7 @@ def collect_alt_events(path):
                         alt_dict[gene_name]['ret']={}
                         alt_dict[gene_name]['starts']=set() 
                         alt_dict[gene_name]['ends']=set() 
+                        alt_dict[gene_name]['seq']=[]
                         alt_dict[gene_name]['alt'][starts5]=set()
                         alt_dict[gene_name]['alt'][starts5].add((entry,'splice'))
 
@@ -106,6 +133,7 @@ def collect_alt_events(path):
                           alt_dict[gene_name]={}
                           alt_dict[gene_name]['alt']={}
                           alt_dict[gene_name]['ret']={}
+                          alt_dict[gene_name]['seq']=[]
                           alt_dict[gene_name]['starts']=set() 
                           alt_dict[gene_name]['starts'].add(position) 
 
@@ -124,6 +152,7 @@ def collect_alt_events(path):
                           alt_dict[gene_name]={}
                           alt_dict[gene_name]['alt']={}
                           alt_dict[gene_name]['ret']={}
+                          alt_dict[gene_name]['seq']=[]
                           alt_dict[gene_name]['ends']=set() 
                           alt_dict[gene_name]['ends'].add(position) 
 
@@ -141,10 +170,12 @@ def generate_map_and_detail_dicts(alt_dict,chromosome_list):
         ends=sorted(list(data['ends']),key=lambda x: x[1], reverse=True)
         alts=data['alt']
         rets=data['ret']
+        seqs=data['seq']
 
         detail_dict[gene]={}
         detail_dict[gene]['ret']={}
         detail_dict[gene]['alt']={}
+        detail_dict[gene]['seqs']={}
         start_and_end=0
         alt_starts=0
         alt_splicing=0
@@ -176,7 +207,6 @@ def generate_map_and_detail_dicts(alt_dict,chromosome_list):
             if len(alts)>0:
              for alt in alts:
               associated_junctions=alts[alt]
-
               for associated_junction in associated_junctions:
                 position=associated_junction
 
@@ -200,6 +230,20 @@ def generate_map_and_detail_dicts(alt_dict,chromosome_list):
                 type1=associated_junction[2]
                 for x in range(mixed[1],mixed[2],1):
                      detail_dict[gene]['ret'][x]=('retention',tuple(mixed))
+            group=0
+            if len(seqs)>0:
+
+               for seq in seqs:
+                 group+=1
+                 for seq1 in seq:
+                  seq_list=[]
+                  for seq2 in seq:
+                      if seq2!=seq1:
+                          seq_list.append(seq2)
+                      for x in range(int(seq1.split('_')[1]),int(seq1.split('_')[2]),1):
+                          detail_dict[gene]['seqs'][x]=(seq_list,group,seq1)
+
+
 
     return map_dict,detail_dict
 
@@ -214,7 +258,7 @@ number=-1
 Isoform_Ident={}
 isoform_dict={}
 read_numbers={}
-
+isoform_set=set()
 for line in open(content_file):
 
   bad=0
@@ -253,7 +297,7 @@ for line in open(content_file):
     begin=int(a[15])
     span=int(a[16])
 
-
+    
 
 
     first_number=int(a[11])
@@ -261,12 +305,14 @@ for line in open(content_file):
     if a[8]=='+':
         extra_start_bases=int(first_number)
         extra_end_bases=int(last_number)
-
+        left_ispcr=name.split('_')[-2]
+        right_ispcr=name.split('_')[-1]
 
     if a[8]=='-':
         extra_start_bases=int(last_number)
         extra_end_bases=int(first_number)
-
+        left_ispcr=name.split('_')[-1]
+        right_ispcr=name.split('_')[-2]
 
     matches=name.split('_')
     ratio=sum(np.array(a[18].split(',')[:-1],dtype=int))/int(a[10])
@@ -281,21 +327,23 @@ for line in open(content_file):
         pass
 
 
-    if matched==1:
+    if matched==1:# and extra_start_bases<15 and extra_end_bases<15 and left_ispcr==right_ispcr=='p':
 
         if gene_chromosome==chromosome:
              
-            start_info=gene_data[1]
-            end_info=gene_data[2]
-            start=int(start_info.split('_')[1])
-            end=int(end_info.split('_')[2]) 
+          start_info=gene_data[1]
+          end_info=gene_data[2]
+          start=int(start_info.split('_')[1])
+          end=int(end_info.split('_')[2]) 
 
  
-            gene_name=gene_data[0]
+          gene_name=gene_data[0]
 
-            gene_start=gene_data[1].split('_')[1]
-            gene_end=gene_data[2].split('_')[2]
 
+
+          left_bin=gene_data[1][0]
+          right_bin=gene_data[2][0]
+          if left_bin!=right_bin:
             gene_info=detail_dict[gene_name]
 
             blocksizes=a[18].split(',')[:-1]
@@ -305,12 +353,16 @@ for line in open(content_file):
             indels=[]
             covered_list=[]
             alt_splice_set=set()
+            seq_splice_set=set()
+            seq_splice_present=set()
+
             for x in range(0,len(blocksizes)-1,1):
                 blockstart=int(blockstarts[x])
                 blocksize=int(blocksizes[x])
                 left_splice=blockstart+blocksize
                 right_splice=int(blockstarts[x+1])
-                if right_splice-left_splice>50:
+                if right_splice-left_splice>50:# and int(readstarts[x])+blocksize==int(readstarts[x+1]):
+
                   try:
                     match=detail_dict[gene_name]['alt'][left_splice][right_splice]
                     alt_splice_set.add(match)
@@ -322,6 +374,21 @@ for line in open(content_file):
                   except:
                     pass
 
+                  try:
+                    matches=detail_dict[gene_name]['seqs'][left_splice]
+                    for match in matches[0]:
+                        seq_splice_set.add(int(match.split('_')[1]))
+                        seq_splice_present.add(matches[1])
+                  except:
+                    pass
+                  try:
+                    matches=detail_dict[gene_name]['seqs'][right_splice]
+                    for match in matches[0]:
+                        seq_splice_set.add(int(match.split('_')[1]))
+                        seq_splice_present.add(matches[1])
+                  except:
+                    pass
+
 
                 for y in range(blockstart,blockstart+blocksize,1):
 
@@ -330,6 +397,7 @@ for line in open(content_file):
                         covered_list.append(match)
                     except:
                         pass
+
 
             
 
@@ -353,10 +421,11 @@ for line in open(content_file):
 
             splice_out={}
             alt_splices_present=set() 
+            rights=set()
             for entry in sorted(list(alt_splice_set), key=lambda x: x[1]):
 
                 identity+=str(entry[1])[-4:]+'-'+str(entry[2])[-4:]+','
-
+                rights.add(entry[2])
                 alt_splices_present.add((entry[1]))
                 for intro_spliced in range(min(entry[1],entry[2])+1,max(entry[1],entry[2]),1):
                     splice_out[intro_spliced]=1
@@ -375,10 +444,41 @@ for line in open(content_file):
                         alt_splices_required.add(key[0]) 
 
 
+            seq_splice_required=set()
+            seq_splice_required_dict={}
+            for key in detail_dict[gene_name]['seqs']:
+                group=detail_dict[gene_name]['seqs'][key][1]
+                site=detail_dict[gene_name]['seqs'][key][2]
+                if start<key<end:
+                    try: 
+                        bla=splice_out[key]
+                    except:
+                        try:
+                            seq_splice_required_dict[group].add(site) 
+                        except:
+                            seq_splice_required_dict[group]=set()
+                            seq_splice_required_dict[group].add(site)
 
-            if alt_splices_present==(alt_splices_required-retention_present):
+            seq_retention_set=set()
+            for key in retention_present:
+                try:
+                    group=detail_dict[gene_name]['seqs'][key][1]
+                    site=detail_dict[gene_name]['seqs'][key][2]
+                    seq_retention_set.add(group)
+                except:
+                    pass
 
-              
+            for group in seq_splice_required_dict:
+                if len(seq_splice_required_dict[group])>1:
+                    seq_splice_required.add(group)
+
+
+
+#            if chromosome=='SIRV3' and start==1935 and end==8949 and 6323 in alt_splices_present:
+#                print(start,end,alt_splices_required,alt_splices_present, retention_present,seq_splice_set,seq_splice_present,seq_splice_required)
+#                print(begin,start,end,alt_splices_present,((alt_splices_required-retention_present)-seq_splice_set),retention_present,seq_retention_set,(seq_splice_required-seq_retention_set),seq_splice_present)
+            if alt_splices_present==((alt_splices_required-retention_present)-seq_splice_set) and (seq_splice_required-seq_retention_set) <= seq_splice_present:
+
 
 
               try:
@@ -388,11 +488,15 @@ for line in open(content_file):
                   Isoform_Ident[identity]='Isoform'+str(Isoform_counter[gene_name])
                   Isoform_Identity=Isoform_Ident[identity]
 
+#              if chromosome=='SIRV3' and start==1935 and end==8949 and 6323 in alt_splices_present:
 
-              filename=gene_name[:200]+'_'+Isoform_Identity
+#                  print('success',Isoform_Ident[identity],identity)
+
+              detailed_identity=identity
+              filename=gene_name[:200]+'_'+Isoform_Identity+'_'+left_bin+'_'+right_bin
 
               identity=Isoform_Identity
-
+              isoform_set.add(Isoform_Identity+'\t'+detailed_identity)
 
               try:
                 isoform_dict[gene_name][identity][infile]+=1
@@ -414,6 +518,9 @@ for line in open(content_file):
               out_reads.write('>'+read_dict[name][0][1:]+'_'+str(extra_start_bases)+'_'+str(extra_end_bases)+'\n'+read_dict[name][1])
               out_reads.close() 
 
+out_iso=open(path+'/Isoforms.txt','w')
+for isoform in isoform_set:
+    out_iso.write(isoform+'\n')
 out=open(path+'/Isoform_expression.txt','w')
 
 for gene in sorted(list(isoform_dict.keys())):

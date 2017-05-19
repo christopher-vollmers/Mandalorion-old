@@ -9,11 +9,14 @@ import numpy as np
 path=sys.argv[1]   ### Point at the folder your 2D fastq file is located in
 file_name=sys.argv[2]   ### Name of 2D fastq file
 quality_cutoff=int(sys.argv[3])  ### We usually go for '9'
+
     
 infile=path+'/'+file_name
 length=0
 for line in open(infile):
     length+=1
+
+print(length/4)
 
 out1=open(path+'/2D.fastq','w')
 out2=open(path+'/2D.fasta','w')
@@ -47,6 +50,8 @@ while x<length:
     if np.average(quals)>=quality_cutoff:
         out1.write(a_new+b_new+c_new+d_new)
         out2.write(a_fasta+b_new)
+
+
 
     x+=4
 

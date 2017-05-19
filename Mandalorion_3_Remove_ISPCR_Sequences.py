@@ -44,7 +44,7 @@ def find_ispcr(infile):
   reverse=0
   total_double=0
   difference=0
-  while x<=length:
+  while x<length:
     a=file1.readline()
     b=file1.readline().strip()  
     c=file1.readline()

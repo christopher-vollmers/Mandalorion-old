@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 
-
+gmap_threads=sys.argv[3]
 genome=sys.argv[2]
 path=sys.argv[1]
 
@@ -103,7 +103,7 @@ def filter_reads(path,infile,outfile):
 
 infile=path+'/2D_trimmed_l_gmapoutput.psl'
 outfile=path+'/2D_trimmed_l_gmapoutput_filtered.psl'
-os.system('gmap -B 5 -f psl -d %s %s > %s ' %(genome,path+'/2D_trimmed_l.fasta',infile))
+os.system('gmap -B 5 -t %s -f psl -d %s %s > %s ' %(gmap_threads,genome,path+'/2D_trimmed_l.fasta',infile))
 filter_reads(path,infile,outfile)
 pass_data=extract_fastq_data(path,infile)
 print(len(pass_data))

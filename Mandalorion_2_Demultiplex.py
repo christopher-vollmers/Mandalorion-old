@@ -11,7 +11,7 @@ path=sys.argv[1]  ### path to where your fastq file is located
 adapter_fasta=sys.argv[2]  ### fasta file containing adapter sequences
 adapter_comb=sys.argv[3]  ### file containin sample names and index combinations
 
-os.system('blat -noHead -stepSize=1 -minScore=20 -minIdentity=20 '+adapter_fasta +' '+ path+'/2D.fasta ' +path+'/2D_adapter_alignment.psl')
+#os.system('blat -noHead -stepSize=1 -minScore=20 -minIdentity=20 '+adapter_fasta +' '+ path+'/2D.fasta ' +path+'/2D_adapter_alignment.psl')
 
 readlist=[]
 adapter_dict={}
@@ -19,6 +19,8 @@ adapter_dict={}
 length=0
 for line in open(path+'2D.fastq'):
     length+=1
+
+
 iterator=0
 infile=open(path+'2D.fastq','r')
 while iterator<length:
@@ -44,26 +46,32 @@ while iterator<length:
     iterator+=4   
 
 
-
+burn_dict={}
 for line in open(path+'2D_adapter_alignment.psl'):
     a=line.strip().split('\t')
     if len(a)>8:
         read_name=a[9]
         adapter=a[13]
         strand=a[8]
+        position='-'
         if strand=='+':
-            if int(a[12])<200:
+            if int(a[12])<300:
                 position=int(a[12])+(int(a[14])-int(a[16]))
+            else:
+                burn_dict[read_name]=1
 
         if strand=='-':
-            if int(a[11])>int(a[10])-200:
+            if int(a[11])>int(a[10])-300:
                 position=int(a[11])-(int(a[14])-int(a[16]))
+            else:
+                burn_dict[read_name]=1
 
+        if position!='-':
+            if int(a[0])>20:
+                adapter_dict[read_name][strand].append(adapter)
+                adapter_dict[read_name][strand+'_pos'].append(position)
 
-        if int(a[0])>30:
-            adapter_dict[read_name][strand].append(adapter)
-            adapter_dict[read_name][strand+'_pos'].append(position)
-
+print('Reads with Internal Adapters', len(burn_dict))
 
 adapters=[]
 for line in open(adapter_fasta):
@@ -86,8 +94,12 @@ for adapter1 in adapters:
 
 
 for read in readlist:
-    if len(adapter_dict[read]['+'])<=2 or len(adapter_dict[read]['-'])<=2:
-        count_dict[adapter_dict[read]['+'][-1]][adapter_dict[read]['-'][-1]]+=1
+    try:
+        bla=burn_dict[read]
+    except:
+        if len(adapter_dict[read]['+'])<=2 or len(adapter_dict[read]['-'])<=2:
+            count_dict[adapter_dict[read]['+'][-1]][adapter_dict[read]['-'][-1]]+=1
+
 
 
 out_dict={}
@@ -97,6 +109,7 @@ for line in open(adapter_comb):
     Sample_Name=a[0]
     index1=a[1]
     index2=a[2]
+    print(index1,index2)
     out_dict[index1+'_'+index2]=path+'/'+Sample_Name+'/2D.fast'
     out_dict[index1+'_'+index1]=path+'/'+Sample_Name+'/2D.fast'
     out_dict[index2+'_'+index2]=path+'/'+Sample_Name+'/2D.fast'
@@ -129,6 +142,9 @@ while x<length:
   d=infile.readline().strip()
   name=a[1:].strip()
   try:
+    bla=burn_dict[name]
+  except:
+    try:
       if len(adapter_dict[name]['+'])<=2 and len(adapter_dict[name]['-'])<=2:
         outfile=out_dict[adapter_dict[name]['+'][-1]+'_'+adapter_dict[name]['-'][-1]]
         add_left='p'
@@ -153,7 +169,7 @@ while x<length:
             outa.write('>'+a[1:]+'_'+add_left+'_'+add_right+'\n'+b[position_plus:position_minus]+'\n')
             outq.write(a+'_'+add_left+'_'+add_right+'\n'+b[position_plus:position_minus]+'\n'+c+'\n'+d[position_plus:position_minus]+'\n')
 
-  except:
+    except:
       pass
   x+=4
 

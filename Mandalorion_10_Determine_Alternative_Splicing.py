@@ -118,14 +118,14 @@ def count_matches_alt_splicing(Type1,ONT):
     total=0
     for second in ONT[key]:
         total+=ONT[key][second]
-    print(key)
-    first_splice=key.split('_')[-3]+'_'+key.split('_')[-2]+'_'+key.split('_')[-1]
+
+    first_splice=key.split('_')[-4]+'_'+key.split('_')[-3]+'_'+key.split('_')[-2]+'_'+key.split('_')[-1]
     name=key.split('_')[0]+'_'+key.split('_')[1]
     ONT_2nd=set()
     for second in ONT[key]:
-      if ONT[key][second]>1 and ONT[key][second]/total>0.01:
+      if ONT[key][second]>1 and ONT[key][second]/total>0.03:
 
-        ONT_2nd.add(second)
+        ONT_2nd.add(second)#+'~'+str(ONT[key][second]/total))
 
     if len(ONT_2nd)>1:
       out.write(name+'\t'+first_splice+'\t')
@@ -138,7 +138,7 @@ def count_matches_alt_splicing(Type1,ONT):
 
 
 
-def collect_splices(infile):
+def collect_splices(infile,out_seq):
   total=0
   total1=0
 
@@ -177,15 +177,30 @@ def collect_splices(infile):
 
     splice_list_sorted=sorted(splice_list, key=lambda x: int(x.split('_')[1]))
 
-
+    seq_list=[]
+    previous_type='-'
     for x in range(0,len(splice_list_sorted),1):
         type_string='' 
         total1+=1
         type_string+=splice_list_sorted[x][:2]
         type1=splice_list_sorted[x][:2]
+        if previous_type==type1:
+            seq_list.append(splice_list_sorted[x])
+        else:
+            if len(seq_list)>1:
+                out_seq.write(gene_name+'\t')
+                for seq_splice in seq_list:
+                    out_seq.write(seq_splice+',')
+                out_seq.write('\n')
+            seq_list=[]
+            seq_list.append(splice_list_sorted[x])
+            previous_type=type1
+
+
+
         for y in range(0,len(splice_list_sorted),1):
          if x<y:
-           if y<x+10:
+           if y<x+20:
             type_string+=splice_list_sorted[y][:2]
             type2=splice_list_sorted[y][:2]
             bin1=range(int(splice_list_sorted[x].split('_')[1])-1,int(splice_list_sorted[x].split('_')[2]),1) 
@@ -197,7 +212,6 @@ def collect_splices(infile):
             if type1=='3l' and type2=='5r':
               match=1
             if match==1:
-
               try:
                     bla=data_dict1[chromosome][type_string]
               except:
@@ -215,6 +229,7 @@ def collect_splices(infile):
                data_dict2[chromosome][type_string][splice_list_sorted[x]+'~'+splice_list_sorted[y]+'~'+gene_name]={}
                for base1 in binbetween:
                 data_dict2[chromosome][type_string][splice_list_sorted[x]+'~'+splice_list_sorted[y]+'~'+gene_name][base1]=1
+
 
            else:
               break 
@@ -454,7 +469,8 @@ data_dict2={}
 content_file=sys.argv[1]
 path=sys.argv[2]
 
-data_dict1,data_dict2=collect_splices(path+'/Matched_Combined_TESS_SS.txt')
+data_dict1,data_dict2=collect_splices(path+'/Matched_Combined_TESS_SS.txt',open(path+'Sequential_SS.txt','w'))
+
 
 
 print(1)

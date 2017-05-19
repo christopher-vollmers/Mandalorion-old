@@ -1,6 +1,11 @@
 import sys
 import numpy
 
+content_file=sys.argv[1]  ### This file should simply contain the paths to to all the psl files you want to include in the analysis. The aligned reads have to be parsed using Isopore_3.
+out_path=sys.argv[2]
+cutoff=float(sys.argv[3])
+genome_file=sys.argv[4]
+refine=sys.argv[5]
 
 TSS='ATGG'
 TES='TTTT'
@@ -187,9 +192,9 @@ def scan_for_best_bin(entry,density_dict,distance_range,iterator_shift,bottom,to
     return best_extra_list,best_extra_list_bases,coverage_area,base_match,peak_center 
 
 
-def block_out_peak_area(peak_center,peak_areas,iterator_shift,Peaks,coverage_area,reverse):
+def block_out_peak_area(peak_center,peak_areas,iterator_shift,Peaks,coverage_area,reverse,chromosome,side):
     for base in range(peak_center-(10*iterator_shift),peak_center+(10*iterator_shift),iterator_shift):
-        peak_areas[base]=Peaks+1
+        peak_areas[chromosome][side][base]=Peaks+1
 
     iterator=0
     count=0
@@ -208,7 +213,7 @@ def block_out_peak_area(peak_center,peak_areas,iterator_shift,Peaks,coverage_are
                 counter+=1
                 base_minus=base_f
                 for base in range(peak_center,base_minus+(iterator_shift*5),iterator_shift):
-                    peak_areas[base]=str(Peaks+1)+'_'+str(counter)
+                    peak_areas[chromosome][side][base]=str(Peaks+1)+'_'+str(counter)
     return peak_areas
 
 
@@ -265,7 +270,7 @@ def myround(x, base=10):
     return int(round(x,-1))
 
 
-def find_peaks(density_dict,out,Peaks,reverse,bottom,top,bottom25,top75,cutoff,chromosome,histo_coverage,side):
+def find_peaks(density_dict,Peaks,reverse,bottom,top,bottom25,top75,cutoff,chromosome,histo_coverage,side,peak_areas):
 
     if reverse==False:
         distance_range=range(-10,10,1)
@@ -274,7 +279,7 @@ def find_peaks(density_dict,out,Peaks,reverse,bottom,top,bottom25,top75,cutoff,c
         distance_range=range(10,-10,-1)
         iterator_shift=-1
 
-    peak_areas={}
+
     entry_list=[]
     for entry in density_dict:
         entry_list.append([entry,density_dict[entry]])
@@ -289,13 +294,18 @@ def find_peaks(density_dict,out,Peaks,reverse,bottom,top,bottom25,top75,cutoff,c
                  if bottom25<=numpy.percentile(best_extra_list_bases,25): 
                      if numpy.percentile(best_extra_list_bases,75)<=top75:
                          try:
-                             bla=peak_areas[entry]
+                             bla=peak_areas[chromosome][side][entry]
+                             if bla=='annotation':
+                                 best_extra_list,best_extra_list_bases,coverage_area,base_match,peak_center=scan_for_best_bin(entry,density_dict,distance_range,iterator_shift,bottom,top)
+                                 coverage,coverage_area=determine_coverage(coverage_area,chromosome,reverse,peak_center,histo_coverage)
+                                 peak_areas=block_out_peak_area(peak_center,peak_areas,iterator_shift,Peaks,coverage_area,reverse,chromosome,side)
+
                          except:
                              best_extra_list,best_extra_list_bases,coverage_area,base_match,peak_center=scan_for_best_bin(entry,density_dict,distance_range,iterator_shift,bottom,top)
                              coverage,coverage_area=determine_coverage(coverage_area,chromosome,reverse,peak_center,histo_coverage)
 
                              if coverage>0:
-                                if sum(best_extra_list)/coverage>cutoff:
+                                if round(sum(best_extra_list)/coverage,3)>cutoff:
                                    TSS_distance=[]
                                    TES_distance=[]
                                    for seq in base_match:
@@ -327,21 +337,84 @@ def find_peaks(density_dict,out,Peaks,reverse,bottom,top,bottom25,top75,cutoff,c
 
                                    if matched==1:
                                        Peaks+=1
-                                       peak_areas=block_out_peak_area(peak_center,peak_areas,iterator_shift,Peaks,coverage_area,reverse)
+                                       peak_areas=block_out_peak_area(peak_center,peak_areas,iterator_shift,Peaks,coverage_area,reverse,chromosome,side)
 
                     
                                         
 
-    return Peaks
+    return Peaks,peak_areas
 
 
 
-content_file=sys.argv[1]  ### This file should simply contain the paths to to all the psl files you want to include in the analysis. The aligned reads have to be parsed using Isopore_3.
-out_path=sys.argv[2]
-cutoff=float(sys.argv[3])
+def parse_genome(input_file,left_bounds,right_bounds):
+
+    gene_dict={} 
+    for line in open(input_file):
+        a=line.strip().split('\t')
+        if len(a)>7:
+             if a[2]=='exon':
+                 try: 
+                     gene_dict[a[8].split('; transcript_id "')[1].split('"')[0]].append((a[0],a[3],a[4],a[6]))
+                 except:
+                     gene_dict[a[8].split('; transcript_id "')[1].split('"')[0]]=[]
+                     gene_dict[a[8].split('; transcript_id "')[1].split('"')[0]].append((a[0],a[3],a[4],a[6]))
+
+    read_list=[]
+    for transcript_id in gene_dict:
+        transcript_data=gene_dict[transcript_id]
+
+        chromosome=transcript_data[0][0]
+        try:
+            bla=right_bounds[chromosome]
+        except:
+            left_bounds[chromosome]={}
+            right_bounds[chromosome]={}
+            left_bounds[chromosome]['S']=[]
+            right_bounds[chromosome]['S']=[]
+            left_bounds[chromosome]['E']=[]
+            right_bounds[chromosome]['E']=[]
+
+        start=sorted(transcript_data,key=lambda x: int(x[1]))[0][1]
+        end=sorted(transcript_data,key=lambda x: int(x[2]),reverse=True)[0][2]
+
+        if transcript_data[0][3]=='+':
+             left_bounds[chromosome]['S'].append(int(start)) 
+             right_bounds[chromosome]['E'].append(int(end)) 
+        elif transcript_data[0][3]=='-':
+             left_bounds[chromosome]['E'].append(int(start))
+             right_bounds[chromosome]['S'].append(int(end))  
+
+    return left_bounds,right_bounds
+
+def make_genome_bins(bounds,side,Peaks,chromosome,peak_areas,reverse):
+    for type1 in ['S','E']:
+        covered={}
+        position_list=sorted(bounds[type1],key=int,reverse=reverse)
+        for index1 in range(0,len(position_list),1):
+            try:
+                bla=peak_areas[chromosome][side][position_list[index1]]
+            except:
+                start=position_list[index1]-10
+                end=position_list[index1]+10
+                out.write(chromosome+'\t'+str(start)+'\t'+str(end)+'\t'+type1+side+str(Peaks)+'_'+str(start)+'_'+str(end)+'_A'+'\t'+str(Peaks)+'\n')
+                if side =='l':
+                    for base in range(start,end+40,1):                             
+                        peak_areas[chromosome][side][base]='annotation'
+                if side =='r':
+                    for base in range(start-40,end,1):                             
+                        peak_areas[chromosome][side][base]='annotation'
+
+                Peaks+=1                    
+                    
+    return Peaks,peak_areas
+
+
 
    
 histo_left_bases, histo_right_bases,chromosome_list,histo_coverage=collect_reads(content_file)
+left_bounds={}
+right_bounds={}
+left_bounds,right_bounds=parse_genome(genome_file,left_bounds,right_bounds)
 
 
 out=open(out_path+'TESS.bed','w')
@@ -351,10 +424,24 @@ Right_Peaks=0
 
 
 
-for chromosome in sorted(list(chromosome_list)):
-    print(chromosome, Left_Peaks, Right_Peaks)
-    Left_Peaks=find_peaks(histo_left_bases[chromosome],out,Left_Peaks,False,6,15,0,20,cutoff,chromosome,histo_coverage,'l')
-    Right_Peaks=find_peaks(histo_right_bases[chromosome],out,Right_Peaks,True,6,15,0,20,cutoff,chromosome,histo_coverage,'r')
+peak_areas={}
+for chromosome in chromosome_list:
+    peak_areas[chromosome]={}
+    peak_areas[chromosome]['l']={}
+    peak_areas[chromosome]['r']={}
+    print(chromosome)
+    if 'g' in refine:
+        Left_Peaks_old=Left_Peaks
+        Right_Peaks_old=Right_Peaks
+        Left_Peaks,peak_areas=make_genome_bins(left_bounds[chromosome],'l',Left_Peaks,chromosome,peak_areas,False)
+        Right_Peaks,peak_areas=make_genome_bins(right_bounds[chromosome],'r',Right_Peaks,chromosome,peak_areas,True)
+        print('Annotation-Based', Left_Peaks-Left_Peaks_old,Right_Peaks-Right_Peaks_old)
+    Left_Peaks_old=Left_Peaks
+    Right_Peaks_old=Right_Peaks
+    Left_Peaks,peak_areas=find_peaks(histo_left_bases[chromosome],Left_Peaks,False,6,15,0,20,cutoff,chromosome,histo_coverage,'l',peak_areas)
+    Right_Peaks,peak_areas=find_peaks(histo_right_bases[chromosome],Right_Peaks,True,6,15,0,20,cutoff,chromosome,histo_coverage,'r',peak_areas)
+    print('Read-Based', Left_Peaks-Left_Peaks_old,Right_Peaks-Right_Peaks_old)
+
 
 
 print(Left_Peaks)
