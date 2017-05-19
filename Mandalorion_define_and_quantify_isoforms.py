@@ -10,7 +10,7 @@ parser.add_argument('-a','--genome_annotation',type=str)
 parser.add_argument('-g','--gmap_genome',type=str)
 parser.add_argument('-l','--gene_list',type=str)
 parser.add_argument('-i','--illumina_content_file',type=str, default='-')
-parser.add_argument('-r','--refine',type=str,default=None,choices=['g','gi'])  # if set to 'i' or 'gi' and no illumina_content_file is provided, the i will be ignored
+parser.add_argument('-r','--refine',type=str,default=None,choices=['g','gi','i'])  # if set to 'i' or 'gi' and no illumina_content_file is provided, the i will be ignored
 args=parser.parse_args()
 
 

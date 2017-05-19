@@ -1,5 +1,32 @@
 # Changes
-Fixed a bug in Mandalorion_2_Demultiplex.py that only allowed demultiplexing of reads with Q values > 9.
+
+-Mandalorion_3_Remove_ISPCR_Sequences.py
+    Removed bug that appended empty read at the end of output fastq/a files that would stall gmap.
+-Mandalorion_demultiplex_and_align.py
+    Added '-t' flag option to run multiple gmap threads. Default is 1
+-Mandalorion_just_align.py
+    Added '-t' flag option to run multiple gmap threads. Default is 1
+-Mandalorion_define_and_quantify_isoforms.py
+    Added '-r' flag (options 'g' or 'gi', or 'i') to use use genome annation when defining TESS and SS.
+    Added command to run Mandalorion_6.5_Refine_SS.py
+-Mandalorion_5_TESS.py
+    Modified to accomodate '-r' flag. If '-r' flag contains 'g' it uses TESS defined in the genome annotation file in addition to ONT read data
+-Mandalorion_6_SS.py
+    Modified to accomodate '-r' flag. If '-r' flag contains 'g' it uses SS defined in the genome annotation file in addition to ONT read data
+-Mandalorion_6.5_Refine_SS.py
+    New script that is run if -r flag contains 'i'. 
+    Looks for SS bins that contains more than 1 Illumina splice junction. 
+    It will split those bins if splice junctions are more than 4 bp apart
+
+-Mandalorion_12_Create_Consensi.py
+    Added a minimum isoform ratio for which consensus sequences are generated. It's set to 0.01 by default. 
+    Also exposed values for subsampling (default: 50) and progressive cutoff (default:20) for poa. Increase numbers for more accuracy but longer run time.
+    To change these default values open Mandalorion_define_and_quantify_isoforms.py and look for the third, fourth, and fifth input options to this script.
+
+-Mandalorion_2_Demultiplex.py 
+    Fixed bug that only allowed demultiplexing of reads with Q values > 9.
+    Exclude reads with adapter recognized in the middle of the read (internal)
+
 
 # Mandalorion
 Analysis Pipeline to analysis Nanopore RNAseq data
@@ -78,6 +105,7 @@ For the first part of the Mandalorion pipeline, you can call wrapper scripts to 
         -g, --gmap_genome	gmap genome name (e.g. mm10 or hg38, depending on what you named it when you built it) 
         -a, --adapter_fasta	path/to/sample_index.fasta (Provided)
         -q, --quality_cutoff	sets the minimum average q-score for a read to be kept (We use '9')
+        -t, --gmap_threads	sets the number of threads to run gmap with, default is 1 
 
     Just Align:
         The output will be 2 files in the path specified under 2 below:
@@ -95,6 +123,7 @@ For the first part of the Mandalorion pipeline, you can call wrapper scripts to 
         -f, --fastq	path/to/fastq_file (make sure it is not called 2D.fastq, or it will be overwritten)
         -g, --gmap_genome	gmap genome name (e.g. mm10 or hg38, depending on what you named it when you built it) 
         -q, --quality_cutoff	sets the minimum average q-score for a read to be kept (We use '9')
+        -t, --gmap_threads	sets the number of threads to run gmap with, default is 1 
 
     Both wrapper scripts generate a 'content_file' in the directory the fastq file was located in. 
     You will need this file to run the next part of the pipeline. 
@@ -143,4 +172,7 @@ After you aligned your reads either way you can go ahead and 'Define and Quantif
     -a, --genome_annotation	path/to/genome_annotation_file (Has to be a gtf file and contain "exon" features and "gene_id" fields) 
     -g, --gmap_genome	gmap genome name (e.g. mm10 or hg38, depending on what you named it when you built it) 
     -l, --gene_list	path/to/list_of_genes_for_consensi (Consensus sequences are generated for genes in this file. Example provided)
+    -i, --illumina_content_file	file containing paths to .psl files containing illumina read alignments. One path per line
+    -r, --refine {g,gi,i}	if 'g' is specified, the genome annotation file is used to populate TESS and SS bins. 
+		If 'i' is specified, illumina reads are used to refine splice junctions. 
 
