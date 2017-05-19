@@ -1,3 +1,6 @@
+# Changes
+Fixed a bug in Mandalorion_2_Demultiplex.py that only allowed demultiplexing of reads with Q values > 9.
+
 # Mandalorion
 Analysis Pipeline to analysis Nanopore RNAseq data
 
