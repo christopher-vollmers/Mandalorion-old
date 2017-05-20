@@ -52,7 +52,7 @@
 # Mandalorion
 Analysis Pipeline to analysis Nanopore RNAseq data
 
-### Mandalorion v0.1 ###
+### Mandalorion v0.2 ###
 
 This collection of scripts is intended to provide a complete workflow to process Oxford Nanopore reads to identify and quantify isoforms. 
 Starting with basecalled (Metrichor or Albacore) 1D or 2D reads (better), 
