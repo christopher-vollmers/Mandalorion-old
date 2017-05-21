@@ -11,7 +11,7 @@ path=sys.argv[1]  ### path to where your fastq file is located
 adapter_fasta=sys.argv[2]  ### fasta file containing adapter sequences
 adapter_comb=sys.argv[3]  ### file containin sample names and index combinations
 
-#os.system('blat -noHead -stepSize=1 -minScore=20 -minIdentity=20 '+adapter_fasta +' '+ path+'/2D.fasta ' +path+'/2D_adapter_alignment.psl')
+os.system('blat -noHead -stepSize=1 -minScore=20 -minIdentity=20 '+adapter_fasta +' '+ path+'/2D.fasta ' +path+'/2D_adapter_alignment.psl')
 
 readlist=[]
 adapter_dict={}
