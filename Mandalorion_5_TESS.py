@@ -163,7 +163,7 @@ def scan_for_best_bin(entry,density_dict,distance_range,iterator_shift,bottom,to
         for y in distance_range:
             try:
 
-               bla=peak_areas[entry+x+y]  
+               bla=peak_areas[chromosome][side][entry+x+y]  
             except:
                pass
 
