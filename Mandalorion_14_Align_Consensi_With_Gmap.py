@@ -2,8 +2,8 @@ import os
 import sys
 import numpy as np
 
-
-genome=sys.argv[2]
+genome=sys.argv[3]
+genome_db=sys.argv[2]
 path=sys.argv[1]
 
 
@@ -103,7 +103,7 @@ def filter_reads(path,infile,outfile):
 
 infile=path+'/Isoform_Consensi_gmapoutput_.psl'
 outfile=path+'/Isoform_Consensi_gmapoutput_filtered.psl'
-os.system('gmap -B 5 -f psl -d %s %s > %s ' %(genome, path+'/Isoform_Consensi.fasta',infile))
+os.system('gmap -B 5 -f psl -D %s -d %s %s > %s ' %(genome_db, genome, path+'/Isoform_Consensi.fasta',infile))
 filter_reads(path,infile,outfile)
 pass_data=extract_fastq_data(path,infile)
 print(len(pass_data))

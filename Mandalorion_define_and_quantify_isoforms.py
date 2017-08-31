@@ -8,6 +8,7 @@ parser.add_argument('-c','--content_file',type=str)
 parser.add_argument('-p','--path',type=str)
 parser.add_argument('-a','--genome_annotation',type=str)
 parser.add_argument('-g','--gmap_genome',type=str)
+parser.add_argument('-G','--gmap_path',type=str)
 parser.add_argument('-l','--gene_list',type=str)
 parser.add_argument('-i','--illumina_content_file',type=str, default='-')
 parser.add_argument('-r','--refine',type=str,default=None,choices=['g','gi','i'])  # if set to 'i' or 'gi' and no illumina_content_file is provided, the i will be ignored
@@ -18,9 +19,11 @@ content_file=args.content_file         # file containing paths to psl and fasta/
 path=args.path+'/'	         #path where you want your output files to go
 genome_annotation=args.genome_annotation    #path to your gtf file		
 gmap_genome=args.gmap_genome	         #name of the gmap genome. Just whatever you name it when you use gmap-build to make it
+gmap_path=os.path.abspath(args.gmap_path)
 gene_list=args.gene_list            #list of gene name for which you want to create consensus   
 illumina_content_file=args.illumina_content_file  #If you have Illumina_data it will be used to improve Splice Sites
 refine=args.refine
+print(gmap_path)
 print(gmap_genome)
 
 scripts=os.path.dirname(os.path.realpath(__file__))
@@ -42,6 +45,6 @@ os.system('python3 %s/Mandalorion_11_Define_and_Quantify_Isoforms.py %s %s %s %s
 for line in open(content_file):
     subpath=line.strip().split('\t')[2]
     os.system('python3 %s/Mandalorion_12_Create_Consensi.py %s %s %s %s %s' %(scripts, subpath, gene_list,'0.009',100,50))  # This script uses poaV2 to create isoform consensus reads for each gene specified in the gene list. The number at the end is the ratio an isoform has to represent of all isoforms of each respective gene to be processed 
-    os.system('python3 %s/Mandalorion_14_Align_Consensi_With_Gmap.py %s %s' %(scripts, subpath,gmap_genome))  # This script aligns those isoform consensus reads to the genome.
+    os.system('python3 %s/Mandalorion_14_Align_Consensi_With_Gmap.py %s %s %s' %(scripts, subpath,gmap_path,gmap_genome))  # This script aligns those isoform consensus reads to the genome.
 
 
