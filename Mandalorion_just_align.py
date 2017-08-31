@@ -26,7 +26,7 @@ print(scripts)
 
 os.system('python3 %s/Mandalorion_1_Clean_Read_and_File_Names.py %s %s %s ' %(scripts,path, fastq_name,quality_cutoff))
 os.system('python3 %s/Mandalorion_3_Remove_ISPCR_Sequences.py %s ' %(scripts,path))
-os.system('python3 %s/Mandalorion_4_Align_Reads_With_Gmap.py %s %s %s %s' %(scipts,path, gmap_path,gmap_genome,gmap_threads))
+os.system('python3 %s/Mandalorion_4_Align_Reads_With_Gmap.py %s %s %s %s' %(scripts,path, gmap_path,gmap_genome,gmap_threads))
 content_file=open(path+'/content_file','w')
 content_file.write('%s\t%s\t%s\n' %(path+'/2D_trimmed_l_gmapoutput_filtered.psl',path+'/2D_trimmed_l_filtered.fasta',path+'/'))
 
