@@ -19,9 +19,9 @@ def parse_genome_annotation(genome_annotation):
                 gene_name=a[8].split('gene_id "')[1].split('"')[0]
 
                 try:
-                    gene_start=gene_data[gene_name][0][1]
-                    gene_end=gene_data[gene_name][0][2]
-                    gene_data[gene_name][0]=(chromosome,min(start,gene_start),max(end,gene_end))
+                    gene_start=gene_data[gene_name][1]
+                    gene_end=gene_data[gene_name][2]
+                    gene_data[gene_name]=(chromosome,min(start,gene_start),max(end,gene_end))
                 except:
                     gene_data[gene_name]=(chromosome,start,end)
 
