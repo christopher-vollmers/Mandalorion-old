@@ -512,8 +512,7 @@ for chromosome in chromosome_list:
     peak_areas[chromosome]['l']={}
     peak_areas[chromosome]['r']={}
     print(chromosome)
-    if 'g' in refine:
-
+    if 'g' in refine and chromosome in left_bounds and chromosome in right_bounds:
         Left_Peaks_old=Left_Peaks
         Right_Peaks_old=Right_Peaks
         Left_Peaks,peak_areas=make_genome_bins(left_bounds[chromosome],'l',Left_Peaks,chromosome,peak_areas)
