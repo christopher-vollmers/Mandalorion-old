@@ -3,9 +3,7 @@
 
 # https://github.com/christopher-vollmers/Mandalorion
 
-# designed for our R2C2 protocol and an experimental version (no guarantees) intended for 1D reads at 
-
-# https://github.com/christopher-vollmers/Mandalorion-Episode-II
+# designed for our R2C2 protocol.
 
 
 # Changes
